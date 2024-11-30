@@ -134,6 +134,39 @@ app.post('/angles', authenticate, (req, res) => {
   res.json({ message: 'Data saved successfully.' });
 });
 
+//user goal routes
+// Get user's goal
+app.get('/goal', authenticate, (req, res) => {
+  const users = readJsonFile(userFilePath);
+  const user = users.find((user) => user.email === req.user.email);
+  
+  if (!user) {
+    return res.status(404).json({ message: 'User not found.' });
+  }
+
+  res.json({ goal: user.goal || 170 }); // Default to 170 if not set
+});
+
+// Update user's goal
+app.post('/goal', authenticate, (req, res) => {
+  const { goal } = req.body;
+  if (goal === undefined || typeof goal !== 'number') {
+    return res.status(400).json({ message: 'Invalid goal.' });
+  }
+
+  const users = readJsonFile(userFilePath);
+  const userIndex = users.findIndex((user) => user.email === req.user.email);
+
+  if (userIndex === -1) {
+    return res.status(404).json({ message: 'User not found.' });
+  }
+
+  users[userIndex].goal = goal;
+  writeJsonFile(userFilePath, users);
+
+  res.json({ message: 'Goal updated successfully.', goal });
+});
+
 // Global error handler for file upload validation
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError || err.message === 'Invalid file type. Only PNG, JPG, and JPEG are allowed.') {
